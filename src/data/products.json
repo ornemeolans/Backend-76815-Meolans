@@ -1,0 +1,13 @@
+[
+	{
+		"id": 1,
+		"title": "Cámara de prueba",
+		"description": "Probando mi servidor",
+		"code": "PROB01",
+		"price": 500,
+		"status": true,
+		"stock": 5,
+		"category": "Test",
+		"thumbnails": []
+	}
+]
