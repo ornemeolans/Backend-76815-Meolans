@@ -1,0 +1,104 @@
+<h1>⚡ Productos en Tiempo Real</h1>
+
+<div class="form-container">
+    <h2>✨ Agregar Nuevo Producto</h2>
+    <form id="productForm">
+        <div>
+            <label for="title">📦 Título</label>
+            <input type="text" id="title" name="title" placeholder="Nombre del producto" required>
+        </div>
+        <div>
+            <label for="description">📝 Descripción</label>
+            <input type="text" id="description" name="description" placeholder="Descripción detallada" required>
+        </div>
+        <div>
+            <label for="code">🔖 Código</label>
+            <input type="text" id="code" name="code" placeholder="Código único" required>
+        </div>
+        <div>
+            <label for="price">💰 Precio</label>
+            <input type="number" id="price" name="price" placeholder="0.00" step="0.01" required>
+        </div>
+        <div>
+            <label for="stock">📊 Stock</label>
+            <input type="number" id="stock" name="stock" placeholder="Cantidad disponible" required>
+        </div>
+        <div>
+            <label for="category">🏷️ Categoría</label>
+            <input type="text" id="category" name="category" placeholder="Categoría del producto" required>
+        </div>
+        <button type="submit">🚀 Agregar Producto</button>
+    </form>
+</div>
+
+<h2 style="color: white; text-align: center; margin: 30px 0; font-size: 1.8rem;">📋 Lista de Productos</h2>
+<div id="productList" class="product-list">
+    {{#each products}}
+        <div class="product-card" id="product-{{this.id}}">
+            <h3>{{this.title}}</h3>
+            <p>{{this.description}}</p>
+            <p class="price">${{this.price}}</p>
+            <p class="stock">📦 Stock: {{this.stock}}</p>
+            <span class="category">{{this.category}}</span>
+            <button class="delete-btn" onclick="deleteProduct({{this.id}})">🗑️ Eliminar</button>
+        </div>
+    {{/each}}
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+
+    // Escuchar eventos de productos agregados
+    socket.on('productAdded', (product) => {
+        const productList = document.getElementById('productList');
+        const newProduct = document.createElement('div');
+        newProduct.className = 'product-card';
+        newProduct.id = `product-${product.id}`;
+        newProduct.innerHTML = `
+            <h3>${product.title}</h3>
+            <p>${product.description}</p>
+            <p class="price">$${product.price}</p>
+            <p class="stock">📦 Stock: ${product.stock}</p>
+            <span class="category">${product.category}</span>
+            <button class="delete-btn" onclick="deleteProduct(${product.id})">🗑️ Eliminar</button>
+        `;
+        productList.appendChild(newProduct);
+    });
+
+    // Escuchar eventos de productos eliminados
+    socket.on('productDeleted', (productId) => {
+        const productElement = document.getElementById(`product-${productId}`);
+        if (productElement) {
+            productElement.style.animation = 'fadeIn 0.5s ease reverse forwards';
+            setTimeout(() => productElement.remove(), 300);
+        }
+    });
+
+    // Función para eliminar producto via WebSocket
+    function deleteProduct(id) {
+        if (confirm('¿Estás seguro de eliminar este producto?')) {
+            socket.emit('deleteProduct', id);
+        }
+    }
+
+    // Enviar nuevo producto via WebSocket
+    document.getElementById('productForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const product = {
+            title: document.getElementById('title').value,
+            description: document.getElementById('description').value,
+            code: document.getElementById('code').value,
+            price: parseFloat(document.getElementById('price').value),
+            stock: parseInt(document.getElementById('stock').value),
+            category: document.getElementById('category').value,
+            status: true,
+            thumbnails: []
+        };
+
+        socket.emit('addProduct', product);
+        document.getElementById('productForm').reset();
+    });
+</script>
+

@@ -1,0 +1,20 @@
+<h1>🏠 Lista de Productos</h1>
+
+{{#if products}}
+    <div class="product-list">
+        {{#each products}}
+            <div class="product-card">
+                <h3>{{this.title}}</h3>
+                <p>{{this.description}}</p>
+                <p class="price">${{this.price}}</p>
+                <p class="stock">📦 Stock: {{this.stock}}</p>
+                <span class="category">{{this.category}}</span>
+            </div>
+        {{/each}}
+    </div>
+{{else}}
+    <div class="empty-message">
+        <p>No hay productos disponibles. 🚀</p>
+    </div>
+{{/if}}
+
