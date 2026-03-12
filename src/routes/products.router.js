@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ProductManager = require('../managers/ProductManager');
+
 const manager = new ProductManager('./src/data/products.json');
 
 router.get('/', async (req, res) => {
@@ -16,6 +17,13 @@ router.get('/:pid', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const newProduct = await manager.addProduct(req.body);
+        
+        // Obtener io desde app y emitir evento a todos los clientes
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('productAdded', newProduct);
+        }
+        
         res.status(201).json(newProduct);
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -29,7 +37,19 @@ router.put('/:pid', async (req, res) => {
 
 router.delete('/:pid', async (req, res) => {
     const deleted = await manager.deleteProduct(req.params.pid);
-    deleted ? res.json({ message: "Producto eliminado" }) : res.status(404).json({ error: "Producto no encontrado" });
+    
+    if (deleted) {
+        // Obtener io desde app y emitir evento a todos los clientes
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('productDeleted', parseInt(req.params.pid));
+        }
+        
+        res.json({ message: "Producto eliminado" });
+    } else {
+        res.status(404).json({ error: "Producto no encontrado" });
+    }
 });
 
 module.exports = router;
+
