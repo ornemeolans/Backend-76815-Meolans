@@ -38,7 +38,7 @@ Este proyecto es una aplicación de servidor robusta para un eCommerce, desarrol
     ```
 
 3.  **Configurar variables de entorno:**
-    Crea un archivo `.env` en la raíz del proyecto (basado en el `.gitignore` proporcionado) y añade tu URI de conexión:
+    Crea un archivo `.env` en la raíz del proyecto y añade tu URI de conexión:
     ```env
     MONGO_URL=tu_cadena_de_conexion_a_mongodb
     PORT=8080
