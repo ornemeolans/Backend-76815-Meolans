@@ -1,0 +1,92 @@
+<h1>🛍️ Productos</h1>
+
+<!-- Filtros -->
+<div class="filters">
+    <form method="GET" action="/products" class="filter-form">
+        <div class="filter-group">
+            <label>Categoría / Filtro:</label>
+            <input type="text" name="query" value="{{currentQuery}}" placeholder="ej: electronica, available" />
+        </div>
+        <div class="filter-group">
+            <label>Ordenar por precio:</label>
+            <select name="sort">
+                <option value="">Sin orden</option>
+                <option value="asc" {{#if (eq currentSort 'asc')}}selected{{/if}}>Menor a mayor</option>
+                <option value="desc" {{#if (eq currentSort 'desc')}}selected{{/if}}>Mayor a menor</option>
+            </select>
+        </div>
+        <button type="submit" class="btn-filter">Filtrar</button>
+    </form>
+</div>
+
+{{#if products}}
+    <div class="product-list">
+        {{#each products}}
+            <div class="product-card">
+                <h3>{{this.title}}</h3>
+                <p>{{this.description}}</p>
+                <p class="price">${{this.price}}</p>
+                <p class="stock">📦 Stock: {{this.stock}}</p>
+                <span class="category">{{this.category}}</span>
+                <div class="card-actions">
+                    <a href="/products/{{this._id}}" class="btn-detail">Ver detalle</a>
+                    <button class="btn-cart" onclick="addToCart('{{this._id}}')">🛒 Agregar al carrito</button>
+                </div>
+            </div>
+        {{/each}}
+    </div>
+
+    <!-- Paginacion -->
+    <div class="pagination">
+        {{#if hasPrevPage}}
+            <a href="{{prevLink}}" class="btn-page">← Anterior</a>
+        {{else}}
+            <span class="btn-page disabled">← Anterior</span>
+        {{/if}}
+
+        <span class="page-info">Página {{page}} de {{totalPages}}</span>
+
+        {{#if hasNextPage}}
+            <a href="{{nextLink}}" class="btn-page">Siguiente →</a>
+        {{else}}
+            <span class="btn-page disabled">Siguiente →</span>
+        {{/if}}
+    </div>
+{{else}}
+    <div class="empty-message">
+        <p>No hay productos disponibles. 🚀</p>
+    </div>
+{{/if}}
+
+<script>
+// ID del carrito - en producción vendría de sesión/auth
+const CART_ID = localStorage.getItem('cartId');
+
+async function addToCart(productId) {
+    if (!CART_ID) {
+        // Crear carrito si no existe
+        const res = await fetch('/api/carts', { method: 'POST' });
+        const cart = await res.json();
+        localStorage.setItem('cartId', cart._id);
+        await addProductToCart(cart._id, productId);
+    } else {
+        await addProductToCart(CART_ID, productId);
+    }
+}
+
+async function addProductToCart(cartId, productId) {
+    const res = await fetch(`/api/carts/${cartId}/products/${productId}`, { method: 'POST' });
+    if (res.ok) {
+        Swal.fire({
+            icon: 'success',
+            title: '¡Listo!',
+            text: 'Producto agregado al carrito',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    } else {
+        const err = await res.json();
+        Swal.fire({ icon: 'error', title: 'Error', text: err.error });
+    }
+}
+</script>

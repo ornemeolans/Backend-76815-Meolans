@@ -1,21 +1,30 @@
 const express = require('express');
+require('dotenv').config();
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const handlebars = require('express-handlebars');
 const path = require('path');
 
+const connectDB = require('./config/db');
 const productsRouter = require('./routes/products.router');
 const cartsRouter = require('./routes/carts.router');
 const viewsRouter = require('./routes/views.router');
-const ProductManager = require('./managers/ProductManager');
+const Product = require('./models/product.model');
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
+
+// Conectar a MongoDB
+connectDB();
 
 // Configurar Handlebars
-app.engine('handlebars', handlebars.engine());
+app.engine('handlebars', handlebars.engine({
+    helpers: {
+        eq: (a, b) => a === b
+    }
+}));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'handlebars');
 
@@ -23,7 +32,7 @@ app.set('view engine', 'handlebars');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Servir archivos estáticos
+// Servir archivos estaticos
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Guardar io en app para usarlo en los routers
@@ -36,32 +45,23 @@ app.use('/api/carts', cartsRouter);
 // Rutas de vistas
 app.use('/', viewsRouter);
 
-// Inicializar ProductManager
-const manager = new ProductManager('./src/data/products.json');
-
-// Configuración de Socket.io
+// Configuracion de Socket.io
 io.on('connection', (socket) => {
     console.log('Cliente conectado:', socket.id);
 
-    // Escuchar evento para agregar producto
     socket.on('addProduct', async (product) => {
         try {
-            const newProduct = await manager.addProduct(product);
-            // Emitir a todos los clientes el nuevo producto
+            const newProduct = await Product.create(product);
             io.emit('productAdded', newProduct);
         } catch (error) {
             console.error('Error al agregar producto:', error.message);
         }
     });
 
-    // Escuchar evento para eliminar producto
     socket.on('deleteProduct', async (id) => {
         try {
-            const deleted = await manager.deleteProduct(id);
-            if (deleted) {
-                // Emitir a todos los clientes el producto eliminado
-                io.emit('productDeleted', id);
-            }
+            const deleted = await Product.findByIdAndDelete(id);
+            if (deleted) io.emit('productDeleted', id);
         } catch (error) {
             console.error('Error al eliminar producto:', error.message);
         }
@@ -75,4 +75,3 @@ io.on('connection', (socket) => {
 httpServer.listen(PORT, () => {
     console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });
-

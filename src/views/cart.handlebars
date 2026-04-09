@@ -1,0 +1,94 @@
+<div class="cart-container">
+    <a href="/products" class="btn-back">← Seguir comprando</a>
+    <h1>🛒 Mi Carrito</h1>
+
+    {{#if products.length}}
+        <div class="cart-list">
+            {{#each products}}
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <h3>{{this.product.title}}</h3>
+                        <p class="price">${{this.product.price}}</p>
+                        <p class="category">{{this.product.category}}</p>
+                    </div>
+                    <div class="cart-item-actions">
+                        <label>Cantidad:</label>
+                        <input
+                            type="number"
+                            min="1"
+                            value="{{this.quantity}}"
+                            onchange="updateQuantity('{{this.product._id}}', this.value)"
+                            class="qty-input"
+                        />
+                        <button class="btn-remove" onclick="removeProduct('{{this.product._id}}')">🗑️ Eliminar</button>
+                    </div>
+                </div>
+            {{/each}}
+        </div>
+
+        <div class="cart-footer">
+            <button class="btn-clear" onclick="clearCart()">🗑️ Vaciar carrito</button>
+        </div>
+    {{else}}
+        <div class="empty-message">
+            <p>El carrito está vacío. 🛒</p>
+            <a href="/products" class="btn-filter">Ver productos</a>
+        </div>
+    {{/if}}
+</div>
+
+<script>
+const CART_ID = '{{cartId}}';
+
+async function removeProduct(productId) {
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: '¿Eliminar producto?',
+        text: 'Se quitará del carrito',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#ee5a5a'
+    });
+    if (!result.isConfirmed) return;
+    const res = await fetch(`/api/carts/${CART_ID}/products/${productId}`, { method: 'DELETE' });
+    if (res.ok) location.reload();
+    else Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el producto' });
+}
+
+async function updateQuantity(productId, quantity) {
+    const qty = parseInt(quantity);
+    if (qty < 1) return;
+    const res = await fetch(`/api/carts/${CART_ID}/products/${productId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: qty })
+    });
+    if (res.ok) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Cantidad actualizada',
+            timer: 1000,
+            showConfirmButton: false
+        });
+    } else {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar la cantidad' });
+    }
+}
+
+async function clearCart() {
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: '¿Vaciar carrito?',
+        text: 'Se eliminarán todos los productos',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, vaciar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#ee5a5a'
+    });
+    if (!result.isConfirmed) return;
+    const res = await fetch(`/api/carts/${CART_ID}`, { method: 'DELETE' });
+    if (res.ok) location.reload();
+    else Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo vaciar el carrito' });
+}
+</script>

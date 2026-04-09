@@ -1,0 +1,63 @@
+<div class="product-detail">
+    <a href="/products" class="btn-back">← Volver a productos</a>
+
+    <div class="detail-card">
+        {{#if product.thumbnails.length}}
+            <div class="product-images">
+                {{#each product.thumbnails}}
+                    <img src="{{this}}" alt="Imagen del producto" />
+                {{/each}}
+            </div>
+        {{/if}}
+
+        <h1>{{product.title}}</h1>
+        <p class="detail-description">{{product.description}}</p>
+
+        <div class="detail-info">
+            <div class="info-row">
+                <span class="label">💰 Precio:</span>
+                <span class="price">${{product.price}}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">📦 Stock:</span>
+                <span>{{product.stock}}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">🏷️ Categoría:</span>
+                <span class="category">{{product.category}}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">🔖 Código:</span>
+                <span>{{product.code}}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Estado:</span>
+                <span>{{#if product.status}}✅ Disponible{{else}}❌ No disponible{{/if}}</span>
+            </div>
+        </div>
+
+        <button class="btn-cart-big" onclick="addToCart('{{product._id}}')">
+            🛒 Agregar al carrito
+        </button>
+    </div>
+</div>
+
+<script>
+const CART_ID = localStorage.getItem('cartId');
+
+async function addProductToCart(cartId, productId) {
+    const res = await fetch(`/api/carts/${cartId}/products/${productId}`, { method: 'POST' });
+    if (res.ok) {
+        Swal.fire({
+            icon: 'success',
+            title: '¡Listo!',
+            text: 'Producto agregado al carrito',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    } else {
+        const err = await res.json();
+        Swal.fire({ icon: 'error', title: 'Error', text: err.error });
+    }
+}
+</script>
